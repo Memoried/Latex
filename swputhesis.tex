@@ -1,0 +1,102 @@
+\documentclass[UTF8]{swputhesis}
+\usepackage{hyperref}
+\usepackage{biblatex}
+\usepackage[nameinlink]{cleveref}  % after hyperref package
+\usepackage{subfig}  % for subfigures
+\usepackage{multirow}
+\usepackage{pdfpages}
+
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{lipsum}
+\usepackage{svg}
+\usepackage{siunitx}
+\usepackage{tabularx}
+\usepackage{adjustbox}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[ruled, vlined]{algorithm2e}
+\usepackage{float}
+\usepackage{afterpage}
+\usepackage{algorithmic}
+\usepackage{nomencl}
+\usepackage{enumitem}
+\usepackage{lineno} 
+\usepackage{multirow}
+\usepackage{arydshln}
+\usepackage{mdframed}
+
+
+
+
+% !TEX root = ./swputhesis.tex
+\graphicspath{{fig/}} % 设置插图文件存放位置
+\addbibresource{ref.bib} % 设置参考文献文件位置
+
+% 图书分类号：在 https://www.clcindex.com/ 查询
+\clc{TE319}
+\ctitle{基于无监督学习的异常网络流量检测研究与实现}
+\cmajor{计算机科学与技术}
+\research{岩石薄片图像分类}
+\cauthor{JK2023031}
+% \id{202021000453}
+% \csupervisor{陈雁}
+
+% 英文封面，暂不要求
+% \etitle{TITLE TITLE TITLE TITLE TITLE TITLE}
+% \emajor{major}
+% \eauthor{author name}
+% \esupervisor{supervisor name}
+% \edate{June, 2021}
+
+\degree{专业学位} % 学位类型，可选：学术学位、专业学位。该设置会影响封面及页眉
+\cdate{2025年6月}
+ 
+\begin{document}
+
+% 封面（由于学术硕士和专业硕士论文封面不同，建议使用 word 制作封面）
+% \makecover
+\includepdf{fig/封面.pdf}
+\newpage
+
+% 版权声明与独创性声明
+\makecopyright
+
+% 摘要、目录页
+\frontmatter
+
+% 摘要
+\include{src/abstract}
+
+% 生成目录
+\tableofcontents
+
+% 正文
+\mainmatter
+
+% 这一章节主要是介绍和测试论文格式，也可以用于快速学习 LaTeX 写作的基本用法
+% 阅读完这一格式章节后删除这一行, 以及删除 src/format.tex 文件
+% \include{src/format}
+
+% 正文部分，可自行添加章节
+\include{src/chapter1}
+\include{src/chapter2}
+\include{src/chapter3}
+\include{src/chapter4}
+\include{src/chapter5}
+\include{src/chapter6}
+
+\backmatter
+
+% 致谢
+\include{src/ack}
+
+% 显示参考文献列表，并加参考文献加入目录
+\printbibliography[heading=bibintoc]
+
+% 攻读硕士学位期间发表的论文及科研成果
+\include{src/resume}
+
+\end{document}

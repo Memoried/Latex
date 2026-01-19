@@ -1,0 +1,39 @@
+# LaTeX auxiliary files
+*.aux
+*.log
+*.synctex.gz
+*.out
+*.toc
+*.bbl
+*.blg
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex(busy)
+
+# PDF files (only ignore if they are generated, not source files)
+*.pdf
+!fig/**/*.pdf
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Command files
+*.cmd
+*.sh
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temporary files
+*.tmp
+*.temp
