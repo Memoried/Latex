@@ -15,6 +15,7 @@
 # PDF files (only ignore if they are generated, not source files)
 *.pdf
 !fig/**/*.pdf
+!swputhesis.pdf
 
 # IDE files
 .vscode/
