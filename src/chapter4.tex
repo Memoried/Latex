@@ -351,6 +351,33 @@ CIC-IDS2017 数据集在数据真实性、场景多样性和特征完整性方�
 据预处理流程下完成。
 
 \section{实验与分析}
+\begin{algorithm}[htbp]
+\caption{面向未知攻击的多模式无监督异常流量检测}
+\label{alg:mmucad}
+\KwIn{网络流量样本集合 $\mathcal{X}$；聚类中心数量 $M$；最大训练轮数 $T$}
+\KwOut{聚类中心集合 $\mathcal{E}$；异常得分 $\{s_i\}$}
+
+初始化聚类中心 $\mathcal{E}^{(0)}$\;
+
+\For{$t=0$ \KwTo $T-1$}{
+	\ForEach{样本 $\mathbf{x}_i \in \mathcal{X}$}{
+		计算 $d_{i,m}^{(t)}$ 并得到 $\alpha_{i,m}^{(t)}$\;
+	}
+	\For{$m=1$ \KwTo $M$}{
+		$\mathbf{e}_m^{(t+1)} \leftarrow
+		\frac{\sum_i \alpha_{i,m}^{(t)}\mathbf{x}_i}
+		{\sum_i \alpha_{i,m}^{(t)}}$\;
+	}
+}
+
+\ForEach{样本 $\mathbf{x}_i \in \mathcal{X}$}{
+$s_i=\min_m\|\mathbf{x}_i-\mathbf{e}_m\|_2$\;
+}
+\end{algorithm}
+
+
+
+
 
 \section{本章小结}
 在本章节中，首先介绍了整个联邦学习的训练流程。首先初始化模型参数，
