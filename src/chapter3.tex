@@ -5,7 +5,7 @@
 在网络流量异常检测任务中，无监督学习方法通常假设正常流量在特征空间中具有紧凑的分布，
 而异常流量则分布在远离密集区域的稀疏空间。然而，在真实的工业互联网或企业网络环境中
 ，\textbf{数据不平衡（Data Imbalance）}问题不仅存在于正常与异常样本之间，更广泛存在
-于正常流量内部 。
+于正常流量内部\cite{lee2025madcluster}。
 
 正常业务流量往往呈现出显著的\textbf{长尾分布（Long-tailed Distribution）}特征：绝
 大多数流量由高频、模式单一的背景流量（如心跳包、周期性轮询）组成，这类样本构成了分
@@ -22,8 +22,8 @@ eighted Self-Supervised Hypersphere Learning）。该方法引入\textbf{实例�
 样性感知加权损失函数，旨在平衡不同频次正常模式对模型训练的贡献，从理论层面解决长尾
 分布带来的检测偏差问题。
 
-\section{问题定义与挑战分析}
-\subsection{无监督异常检测中的长尾分布}
+\section{长尾分布问题分析与实例多样性度量}
+\subsection{无监督异常检测中的长尾分布特性}
 假设训练数据集 $\mathcal{X} = \{x_1, x_2, \ldots, x_N\}$ 仅包含正常流量样本。
 在理想情况下，所有样本 $x_i$ 应均匀分布在某个紧凑的流形空间上。
 然而，在实际网络环境中，样本的分布密度 $\rho(x)$ 往往呈现出显著的不均衡特性。
@@ -40,8 +40,6 @@ eighted Self-Supervised Hypersphere Learning）。该方法引入\textbf{实例�
     其对应的样本密度较低，即 $\rho(x)$ 较小。
 \end{itemize}
 
-
-\subsection{传统距离损失的局限性}
 主流的自监督或无监督异常检测模型通常致力于最小化样本特征
 $\phi(x)$ 到特征中心 $c$ 之间的距离，其通用目标函数可表示为：
 \begin{equation}
@@ -71,22 +69,30 @@ $N_{\mathcal{T}}$，在最小化整体损失的过程中，
     从而被错误判定为异常样本，产生较高的误报率。
 \end{itemize}
 
-如图 3-1 所示，传统损失函数与加权损失函数在处理不平衡数据时
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.5]{fig/chapter3/传统损失函数与加权损失函数差异.pdf}
+	\caption{传统损失函数与加权损失函数差异}
+	\label{fig:31}
+\end{figure}
+
+如图 \ref{fig:31} 所示，传统损失函数与加权损失函数在处理不平衡数据时
 呈现出明显差异：左图中，传统方法学习得到的中心点
 紧贴高密度样本区域，导致灰色稀疏正常样本被误判为异常；
 而右图所示的加权方法通过调节样本贡献权重，
 使特征中心适度向稀疏区域偏移，从而能够覆盖多种正常模式，
 有效缓解长尾样本误判问题。
 
+为了解决上述中心偏移问题，首要任务是找到一种能够精准刻画样本处于“头部”还是“尾部”的量化指标。
 
-\section{基于 IED 的实例多样性度量}
+\subsection{基于 IED 的实例多样性度量定义}
 为有效缓解长尾分布对模型训练带来的不利影响，首先需要在无监督条件下
 构建一种能够刻画样本“稀缺性”或“多样性”的度量指标。
 为此，本文引入实例欧氏距离（Instance Euclidean Distance，IED），
 用于量化样本在特征空间中的局部密度特征。
-\subsection{IED 定义}
+
 对于给定样本 $x_i$，其 IED 值定义为该样本与其在特征空间中
-$k$ 个最近邻样本的平均欧氏距离。
+$k$ 个最近邻样本的平均欧氏距离\cite{pang2025imbalanced}。
 数学表达式如下：
 \begin{equation}
 D_{IED}(x_i) = \frac{1}{k}
@@ -97,7 +103,11 @@ D_{IED}(x_i) = \frac{1}{k}
 其中，$\mathcal{N}_k(x_i)$ 表示样本 $x_i$ 的 $k$ 近邻集合，
 $\phi(\cdot)$ 为特征提取网络。
 
-\subsection{IED 的物理意义}
+基于上述数学定义，IED的物理意义可以从样本在特征空间中的分布密度角度进行解读。
+IED值的大小直接刻画了样本所处的局部密度区域，为区分不同重要性的正常流量提供了量化依据。
+具体而言，IED值反映了样本在正常流量分布中的位置特征，从而揭示了不同样本对模型学习的贡献度差异。
+具体表现如下：
+
 \begin{itemize}
     \item \textbf{低 IED 值：}  
     表示 $x_i$ 位于高密度区域，周围样本相似度高，
@@ -114,70 +124,121 @@ $\phi(\cdot)$ 为特征提取网络。
 通过 IED 指标，我们可以在无监督的情况下，
 有效区分出哪些样本是需要模型“重点关注”的稀有正常流量。
 
-\section{多样性感知加权损失函数}
-基于上述 IED 度量，本节提出一种多样性感知加权损失函数
-（Diversity-Aware Weighted Loss）。
-该方法的核心思想是：降低高频冗余样本的训练权重，
-提高稀有长尾样本的训练权重，
-从而迫使模型在构建超球体时兼顾所有正常模式。
+\section{基于IED加权的超球体模型构建与算法实现}
+\label{sec:weighted_method}
 
-\subsection{权重映射机制}
-为了将 IED 值转化为训练权重，
-本文设计了一种单调递增的映射函数。
-首先对 IED 值进行批次内归一化处理，
-然后通过指数函数或线性缩放方式将其转化为权重系数 $w_i$：
+在明确了 IED 作为多样性度量指标的基础上，本节构建基于实例加权的自监督超球体学习模型。
+该模型的核心思想是通过动态调整不同分布密度下样本的负反馈压力，引导特征空间中的超球体
+边界进行自适应扩张，从而保护长尾分布下的正常样本不被误判。
 
+\subsection{模型整体框架设计}
+本章提出的方法由三个核心功能模块组成如图\ref{fig:32}所示，
+旨在实现从原始流量特征到具备多样性感知能力的异常度量空间的映射：
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.5]{fig/chapter3/Figure_1.png}
+	\caption{IED加权的超球体模型整体框架设计}
+	\label{fig:32}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{特征表征编码器 (Feature Encoder)}：利用深度神经网络将原始高维
+    流量数据 $x$ 映射至低维隐空间特征 $z = \phi(x; \Theta)$，通过自监督学习任务捕
+    获流量的非线性流形结构。
+    \item \textbf{多样性评估模块 (Diversity Estimation Module)}：在每个训练
+    批次（Mini-batch）中，利用 IED 指标实时评估样本的局部稀缺性，识别出处于分布长尾
+    区域的正常模式。
+    \item \textbf{加权优化目标 (Weighted Optimization Objective)}：根据 IED 
+    指标生成的权重因子 $w$，对损失函数进行加权更新，修正特征中心偏移并优化超球体边界。
+\end{enumerate}
+
+\subsection{多样性感知权重生成机制}
+由于不同网络环境下的特征尺度存在差异，原始的 IED 值无法直接应用于梯度优化。本模型设计了一
+种基于非线性映射的权重生成机制，旨在指数级放大长尾样本对模型边界界定的贡献。
+
+首先，对当前批次内的 IED 值进行归一化处理：
 \begin{equation}
-\hat{D}_i =
-\frac{D_{IED}(x_i) - \min(D_{batch})}
-{\max(D_{batch}) - \min(D_{batch})}
+\hat{D}_i = \frac{D_{IED}(z_i) - \min(D_{batch})}{\max(D_{batch}) - 
+\min(D_{batch}) + \epsilon}
+\end{equation}
+其中 $\epsilon$ 为极小常数以保证数值稳定性。随后，引入多样性敏感系数 $\beta$，
+通过指数映射函数生成最终的训练权重 $w_i$：
+\begin{equation}
+w_i = \exp(\beta \cdot \hat{D}_i)
 \end{equation}
 
+通过该机制，当 $\beta > 0$ 时，分布越稀疏的样本（$\hat{D}_i$ 越大）将获得显著
+提高的权重，从而迫使模型在最小化全局损失时，必须同时兼顾这些边缘样本的紧凑性。
+
+\subsection{优化目标函数构建}
+为了实现超球体的自适应构建，本模型定义了基于多样性加权的优化目标 $\mathcal{L}_
+{total}$。该损失函数不要求预先设定超球体半径，而是通过惩罚加权后的特征距离来寻找
+最优的表征空间。
+
 \begin{equation}
-w_i = 1 + \alpha \cdot \hat{D}_i
+\mathcal{L}_{total} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \| 
+\phi(x_i; \Theta) - c \|^2 + \lambda \|\Theta\|^2
 \end{equation}
 
-其中，$\alpha$ 为控制加权强度的超参数。
-当样本 $x_i$ 位于高密度区域（IED 较小）时，
-$\hat{D}_i \rightarrow 0$，对应的权重 $w_i \rightarrow 1$，
-模型对该类样本保持基础训练强度；
-当样本 $x_i$ 位于稀疏区域（IED 较大）时，
-$\hat{D}_i \rightarrow 1$，对应的权重 $w_i \rightarrow 1+\alpha$，
-从而显著提升该类样本在训练过程中的影响力。
+其中，$c$ 为特征空间的全局中心，$\lambda \|\Theta\|^2$ 为参数正则化项。
+在训练过程中，模型不仅更新编码器参数 $\Theta$，同时根据加权后的特征分布动态校
+正中心 $c$ 的位置。
 
-\subsection{加权目标函数构建}
-将多样性权重 $w_i$ 引入基础的距离损失函数中，
-可得到最终的优化目标 $\mathcal{L}_{\text{weighted}}$：
-\begin{equation}
-\mathcal{L}_{\text{weighted}} =
-\frac{1}{N} \sum_{i=1}^{N}
-w_i \cdot \mathcal{L}_{dist}\bigl(\phi(x_i), c\bigr)
-\end{equation}
-
-在该框架下，$\mathcal{L}_{dist}$ 可以采用任意形式的距离度量，
-例如均方误差（MSE）或 Huber Loss 等。
-
-在最小化 $\mathcal{L}_{\text{weighted}}$ 的过程中，
-若模型忽略某个具有较高权重 $w_i$ 的长尾样本
-（即其对应的距离误差较大），
-则将受到比忽略普通样本更为严重的惩罚，
-从而促使模型在训练过程中更加关注稀有但重要的正常模式。
-
-\subsection{梯度分析与几何解释}
-对特征中心 $c$ 求导，可以观察加权机制对中心更新的影响：
-\begin{equation}
-\frac{\partial \mathcal{L}_{\text{weighted}}}{\partial c}
-= -\frac{2}{N} \sum_{i=1}^{N} w_i \bigl(\phi(x_i) - c\bigr)
-\end{equation}
-
-令导数为 $0$，可得最优特征中心 $c^*$ 的解析解为样本特征的加权平均：
+在该目标的约束下，最优特征中心 $c^*$ 的解变为样本特征的加权平均值：
 \begin{equation}
 c^* = \frac{\sum w_i \phi(x_i)}{\sum w_i}
 \end{equation}
 
-相比于传统方法中采用的算术平均形式，
-加权平均得到的中心 $c^*$ 会向权重较大的样本
-（即 IED 较大的稀疏样本）方向发生校正性偏移。
-这种偏移使得超球体在保持对高频数据有效覆盖的同时，
-能够向外“扩张”以包容稀有的正常样本，
-从而形成更加合理且具有鲁棒性的正常行为边界。
+从几何角度进行解释：
+相比于传统方法中采用的算术平均中心，加权中心 $c^*$ 会向权重较大
+（即 IED 较大的稀疏区域）发生校正性偏移
+（Center Rectification）。这种偏移使得超球体在保持对高频数据充分覆盖的同时，
+能够向外“扩张”以接纳稀有的正常样本，从而在不降低召回率的前提下，显著提升了系统的检测精确率。
+
+\subsection{算法流程实现}
+算法 \ref{alg:weighted_training} 展示了基于实例多样性加权的无监督训练过程。
+
+\begin{algorithm}[h]
+\caption{基于多样性加权的无监督超球体训练算法}
+\label{alg:weighted_training}
+\begin{algorithmic}[1]
+\REQUIRE 训练数据集 $\mathcal{X}$，迭代次数 $T$，学习率 $\eta$，敏感系数 
+$\beta$，动量因子 $\gamma$
+\ENSURE 优化后的参数 $\Theta$，校正后的特征中心 $c^*$
+\STATE 初始化编码器参数 $\Theta$ 及随机特征中心 $c$;
+\FOR{$t = 1$ \TO $T$}
+    \STATE 从 $\mathcal{X}$ 中随机采样一个批次 $\mathcal{B} = \{x_1, x_2, \dots, x_n\}$;
+    \STATE 计算特征表示：$Z_{\mathcal{B}} = \{z_i = \phi(x_i; \Theta) \
+    mid x_i \in \mathcal{B}\}$;
+    \STATE \COMMENT{多样性评估}
+    \FORALL{$z_i \in Z_{\mathcal{B}}$}
+        \STATE 计算 $k$-最近邻平均欧氏距离 $D_{IED}(z_i)$;
+    \ENDFOR
+    \STATE \COMMENT{权重生成}
+    \STATE 根据公式计算归一化权重 $w_i = \exp(\beta \cdot \hat{D}_i)$;
+    \STATE \COMMENT{模型优化}
+    \STATE 计算加权损失 $\mathcal{L} = \frac{1}{|\mathcal{B}|} \
+    sum_{z_i \in Z_{\mathcal{B}}} w_i \|z_i - c\|^2$;
+    \STATE 执行反向传播并更新参数：$\Theta \leftarrow \Theta - \eta 
+    \nabla_{\Theta} \mathcal{L}$;
+    \STATE \COMMENT{中心校正更新}
+    \STATE $c \leftarrow (1-\gamma)c + \gamma \frac{\sum w_i z_i}{\sum w_i}$;
+\ENDFOR
+\RETURN $\Theta, c$;
+\end{algorithmic}
+\end{algorithm}
+
+\section{实验结果与分析}
+
+\subsection{数据集准备}
+
+\subsection{评价指标}
+
+\subsection{实验结果}
+
+\subsection{对比实验}
+
+\subsection{消融实验}
+
+\section{本章小结}
