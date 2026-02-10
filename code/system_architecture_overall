@@ -1,0 +1,47 @@
+// Stream Processing Anomaly Detection System
+digraph SystemArchitecture {
+	compound=true rankdir=LR splines=ortho
+	node [fillcolor=white fontname="Times New Roman" fontsize=11 shape=box style="filled,rounded"]
+	edge [color="#555555" fontname="Times New Roman" fontsize=9]
+	subgraph cluster_acquisition {
+		bgcolor="#F8F8F8" label="Data Acquisition Layer"
+		internet [label="Enterprise Network
+Mirror Port" fillcolor="#E6F2FF" shape=oval]
+		zeek [label="Zeek Network Monitor
+(Protocol Analysis & Log Generation)" fillcolor="#E6F2FF"]
+		internet -> zeek
+	}
+	subgraph cluster_transmission {
+		bgcolor="#F8F8F8" label="Data Transmission Layer"
+		kafka [label="Kafka Cluster
+(Topic: raw-traffic-logs)" fillcolor="#E6FFE6" shape=component]
+	}
+	subgraph cluster_analysis {
+		bgcolor="#FFF0F0" label="Analysis & Detection Layer"
+		preprocess [label="Data Preprocessing
+(Z-Score / Feature Selection)" fillcolor="#FFE6E6"]
+		ied_svdd [label="IED-Deep SVDD Model" fillcolor="#FFCCCC"]
+		multimode [label="Multi-mode Clustering Model" fillcolor="#FFCCCC"]
+		aggregator [label="Result Aggregation
+(JSON)" fillcolor="#FFE6E6" shape=parallelogram]
+		preprocess -> ied_svdd
+		preprocess -> multimode
+		ied_svdd -> aggregator
+		multimode -> aggregator
+	}
+	subgraph cluster_storage {
+		bgcolor="#F8F8F8" label="Data Storage Layer"
+		es [label="Elasticsearch
+(Logs & Alerts)" fillcolor="#FFFFE0" shape=cylinder]
+	}
+	subgraph cluster_presentation {
+		bgcolor="#F8F8F8" label="Application Presentation Layer"
+		vue [label="Security Dashboard
+(Vue.js + ECharts)" fillcolor="#F0E6FF"]
+	}
+	zeek -> kafka [penwidth=1.5]
+	kafka -> preprocess [penwidth=1.5]
+	aggregator -> es [penwidth=1.5]
+	vue -> aggregator [dir=both style=bold]
+	vue -> es [constraint=false style=dashed]
+}

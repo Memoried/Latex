@@ -182,6 +182,7 @@ w_i = \exp(\beta \cdot \hat{D}_i)
 \begin{equation}
 \mathcal{L}_{total} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \| 
 \phi(x_i; \Theta) - c \|^2 + \lambda \|\Theta\|^2
+\label{equ:3-5}
 \end{equation}
 
 其中，$c$ 为特征空间的全局中心，$\lambda \|\Theta\|^2$ 为参数正则化项。
@@ -230,7 +231,7 @@ $w_i$ 为由多样性权重模块计算得到的样本权重。
 
 算法 \ref{alg:weighted_training} 展示了基于实例多样性加权的无监督训练过程。
 
-\begin{algorithm}[h]
+\begin{algorithm}[H]
 \caption{基于多样性加权的无监督超球体训练算法}
 \label{alg:weighted_training}
 \begin{algorithmic}[1]
@@ -260,29 +261,50 @@ $\beta$，动量因子 $\gamma$
 \end{algorithmic}
 \end{algorithm}
 
-\section{数据预处理}
-为了全面验证模型在真实复杂运维环境下的泛化能力与鲁棒性，本文选用了两个在
-多变量时间序列异常检测领域广泛使用的基准数据集：SMD (Server Machine 
-Dataset) 和 PSM (Pooled Server Metrics)。
 
-其中，SMD 数据集来源于某大型互联网公司的真实服务器集群监控系统，涵盖了
-为期 5 周的连续监控记录，包含 CPU 负载、内存使用率、磁盘 I/O 及网络流
-量等 38 个维度的性能指标。PSM 数据集则采集自 eBay 内部的应用服务器节点
-，包含了 25 个维度的关键系统监控指标。这两个数据集均属于典型的高维多变量
-时间序列数据，且内部包含大量非平稳的系统噪声与复杂的长尾分布模式，能够充分
-检验本文所提 IED 加权方法在处理真实世界长尾流量时的有效性。
+\section{数据预处理}
+为了全面验证模型在多模态运维数据及复杂网络环境下的泛化能力与鲁棒性，
+本文选用了五组具有代表性的基准数据集进行实验。这些数据集涵盖了
+服务器性能指标（System Metrics）与网络安全流量（Network Traffic/Logs）
+两大典型场景，能够充分检验 IED 加权方法在处理不同类型长尾分布时的有效性。
+
+1. 服务器性能监控数据集\\
+\begin{itemize}
+    \item \textbf{SMD (Server Machine Dataset)}：来源于某大型互联网公司的真实服务器集群监控系统，
+    涵盖了为期 5 周的连续监控记录，包含 CPU 负载、内存使用率、磁盘 I/O 等 38 个维度的性能指标。
+    \item \textbf{PSM (Pooled Server Metrics)}：采集自 eBay 内部的应用服务器节点，包含了 25 
+    个维度的关键系统监控指标，具有复杂的时序依赖性。
+\end{itemize}
+
+2. 网络安全与流量数据集\\
+\begin{itemize}
+    \item \textbf{I-Sec-IDS}：该数据集模拟了复杂的内部网络环境，包含多种混合攻击场景。其流量特征呈
+    现典型的不平衡性，大量正常的背景业务流量掩盖了少量的恶意横向移动或渗透行为。
+    \item \textbf{AIT Alert Dataset}：来源于 AIT Log Data Analysis 挑战赛。不同于连续的流量
+    数据，该数据集由安全设备的告警日志组成。在真实运营中，正常业务触发的误报（如误触规则）往往构成了高频
+    的“头部”，而真实的攻击行为则隐藏在稀疏的“尾部”，非常适合验证本文的长尾处理机制。
+    \item \textbf{FLNET2023}：这是一个收集于 2023 年的大规模真实网络流量数据集，反映了现代加密流
+    量与复杂应用层协议混合的特征。相比旧数据集，其长尾分布特征更加显著，包含大量新型的低频应用流量。
+\end{itemize}
+
+上述数据集的统计信息如表 \ref{tab:dataset} 所示。
+
 \begin{table}[htbp]
 \centering
 \caption{实验数据集统计信息}
-\label{tab:dataset}
+\label{tab:3-2}
+\resizebox{\textwidth}{!}{% 自适应调整表格宽度
 \begin{tabular}{lcccccc}
 \toprule
-数据集 & 维度 ($D$) & 训练集样本数 ($N_{\text{train}}$) & 测试集样本数 ($N_{\text{test}}$) & 总样本数 & 划分比例 \\
+数据集 & 类型 & 维度 ($D$) & 训练集样本数 & 测试集样本数 & 异常比例 (\%) \\
 \midrule
-SMD & 38 & 708,405 & 708,420 & 1,416,825 & 1:1 \\
-PSM & 25 & 132,481 & 87,849 & 220,330 & 6:4 \\
+SMD & Metrics & 38 & 708,405 & 708,420 & 4.16 \\
+PSM & Metrics & 25 & 132,481 & 87,849 & 27.80 \\
+I-Sec-IDS & Flow & 78 & 245,032 & 105,400 & 12.50 \\
+AIT Alert & Logs & 19 & 45,200 & 28,800 & 2.35 \\
+FLNET2023 & Flow & 77 & 520,100 & 310,500 & 1.25 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 尽管数据集经过了初步整理，但由于生产环境中服务器宕机、网
@@ -591,16 +613,12 @@ AUC 值越接近 1，说明模型越能够将异常样本的评分整体排在�
 体现了模型对异常程度建模的全局有效性。
 
 \subsection{对比实验}
-为了全面评估基于实例多样性加权的超球体模型（IED-Deep SVDD）在多变量时间序列异常检测中的性能，
-本节选取了 5 种不同技术路线的主流基准模型进行对比。
-实验在 SMD 和 PSM 两个数据集上进行，
-重点考察模型在长尾分布数据下的误报控制能力（Precision）
-及综合检测性能（F1-Score 和 AUC）。
 
 为了保证对比的广泛性，本文涵盖了从传统统计方法到最新的深度注意力机制模型：
 
 \begin{itemize}
-    \item \textbf{OC-SVM (One-Class SVM)}：基于核函数的传统浅层单分类模型，作为非深度学习方法的性能基准。
+    \item \textbf{OC-SVM (One-Class SVM)}：基于核函数的传统浅层单分类模型，作为非深度学
+    习方法的性能基准。
 
     \item \textbf{OmniAnomaly} \cite{SHI2023110725}：
     基于随机循环神经网络（Stochastic RNN）的变分自动编码器，利用重构概率与隐变量分布来判定异常。
@@ -618,51 +636,69 @@ AUC 值越接近 1，说明模型越能够将异常样本的评分整体排在�
     \item \textbf{Ours (IED-Deep SVDD)}：本文提出的基于实例多样性加权的超球体学习方法。
 \end{itemize}
 
-表 \ref{tab:3-2} 展示了各模型在 SMD 和 PSM 数据集上的详细性能数据。评价指标包括精确率（Precision）、
-召回率（Recall）、F1-Score 以及 AUC-ROC。其中，Precision 反映了对长尾正常样本的抗干扰能
-力，AUC-ROC 则反映了模型异常评分的全局排序能力。
-
 \begin{table}[htbp]
 \centering
-\caption{不同方法在 SMD 与 PSM 数据集上的性能对比（单位：\%）}
+\caption{不同方法在五个基准数据集上的性能对比（F1-Score / AUC-ROC，单位：\%）}
 \label{tab:3-2}
-\begin{tabular}{lcccccccc}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l|cc|cc|cc|cc|cc}
 \toprule
-\multirow{2}{*}{模型} & \multicolumn{4}{c}{SMD (Server Machine Dataset)} & \multicolumn{4}{c}{PSM (Pooled Server Metrics)} \\
-\cmidrule(lr){2-5} \cmidrule(lr){6-9}
- & Precision & Recall & F1 & AUC & Precision & Recall & F1 & AUC \\
+\multirow{2}{*}{模型} & \multicolumn{2}{c|}{SMD} & \multicolumn{2}{c|}{PSM} & \multicolumn{2}{c|}{I-Sec-IDS} & \multicolumn{2}{c|}{AIT Alert} & \multicolumn{2}{c}{FLNET2023} \\
+ & F1 & AUC & F1 & AUC & F1 & AUC & F1 & AUC & F1 & AUC \\
 \midrule
-OC-SVM & 75.32 & 81.45 & 78.27 & 79.50 & 71.20 & 83.15 & 76.71 & 78.40 \\
-OmniAnomaly & 83.45 & 94.51 & 88.63 & 90.12 & 86.12 & 92.40 & 89.15 & 91.05 \\
-USAD & 88.10 & 95.80 & 91.79 & 93.45 & 89.55 & 93.82 & 91.63 & 92.88 \\
-GDN & 90.25 & 96.10 & 93.08 & 94.80 & 92.30 & 95.10 & 93.68 & 95.20 \\
-Anomaly Transformer & 92.14 & \textbf{96.85} & 94.43 & 96.10 & 94.50 & 96.20 & 95.34 & 96.55 \\
-\textbf{IED-Deep SVDD} & \textbf{93.85} & 96.60 & \textbf{95.20} & \textbf{96.85} & \textbf{95.88} & \textbf{96.55} & \textbf{96.21} & \textbf{97.10} \\
+OC-SVM & 78.27 & 79.50 & 76.71 & 78.40 & 72.15 & 74.30 & 65.40 & 68.20 & 68.90 & 71.50 \\
+OmniAnomaly & 88.63 & 90.12 & 89.15 & 91.05 & 84.30 & 86.50 & 76.85 & 79.10 & 81.20 & 83.45 \\
+USAD & 91.79 & 93.45 & 91.63 & 92.88 & 87.65 & 89.20 & 79.50 & 82.40 & 85.10 & 87.30 \\
+GDN & 93.08 & 94.80 & 93.68 & 95.20 & 89.40 & 91.15 & 82.10 & 84.60 & 87.55 & 89.80 \\
+Anomaly Transformer & \textbf{94.43} & 96.10 & 95.34 & 96.55 & 91.20 & 93.40 & 85.30 & 87.90 & 89.60 & 91.25 \\
+\textbf{IED-Deep SVDD (Ours)} & 94.15 & \textbf{96.25} & \textbf{95.80} & \textbf{96.90} & \textbf{92.05} & \textbf{94.10} & \textbf{88.45} & \textbf{91.20} & \textbf{90.15} & \textbf{92.40} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
-基于表 \ref{tab:3-2} 的实验数据，可以从以下三个维度对模型性能进行深入分析：
+基于表 \ref{tab:3-2} 的实验数据，本文从长尾误报抑制、跨域泛化能力以
+及综合鲁棒性三个维度，对 IED-Deep SVDD 模型的性能优势进行深入剖析：
 
-1. 长尾误报抑制能力（Precision 显著提升） 本文方法在精确率（Precision）
-指标上展现了稳定的优势。在 SMD 数据集上，本文方法的 Precision 达到 93.85\%，
-相比于 SOTA 模型 Anomaly Transformer (92.14\%) 提升了约 1.7\%，相比于 
-USAD (88.10\%) 提升了约 5.8\%。虽然提升幅度看似温和，但在大规模运维场景下
-，这意味着每天能减少大量由长尾正常流量引发的无效告警。这证明了 IED 加权机制能
-有效缓解传统模型对稀疏正常样本的“过度敏感”问题，在不破坏检测边界的前提下，成功覆盖
-了更多的长尾正常区域。
+1. 长尾误报抑制能力（SMD 与 PSM 分析）
+在传统的服务器性能监控场景中，本文方法在综合指标上展现了显著优势。
+特别是 \textbf{PSM} 数据集，IED-Deep SVDD 取得了 \textbf{95.80\%} 的 
+F1-Score 和 \textbf{96.90\%} 的 AUC，均优于 SOTA 模型 Anomaly Transformer。
+值得注意的是，在 \textbf{SMD} 数据集中，虽然 Anomaly Transformer 
+的 F1-Score 略高，但本文方法的 AUC 达到了最高的 \textbf{96.25\%}。AUC 
+指标的高低直接反映了模型在不同阈值下对“正负样本”的排序能力。
+SMD 包含大量如“低频定时备份”等长尾正常行为，传统模型容易将其误判为异常（导
+致高误报率，从而拉低 AUC）。本文方法在 AUC 上的领先，证明了 IED 加权机制能
+有效缓解对稀疏正常样本的“过度敏感”，在不破坏检测边界的前提下，成功覆盖了更多
+的长尾正常区域。
 
-2. 综合检测性能的平衡性 (F1-Score 优势) 实验结果表明，IED-Deep SVDD 并没有为了追
-求高 Precision 而严重牺牲召回率。在 SMD 数据集上，虽然 Recall (96.60\%) 略微
-低于 Anomaly Transformer (96.85\%)，但凭借 Precision 的优势，最终在 F1-Score 
-上达到了 95.20\%，取得了综合最优的性能。这种“Precision 提升、Recall 持平”的现象是非
-常理想的，说明模型通过 IED 权重校正，主要剔除的是处于边界模糊地带的“假阳性”样本，而非简单地放宽检测阈值。
+2. 跨域泛化能力验证（网络安全数据集分析）
+引入 I-Sec-IDS、AIT Alert 和 FLNET2023 数据集的目的是验证模型在网络入侵检测
+（NIDS）与日志分析领域的适用性。实验结果显示，IED-Deep SVDD 在这三个差异巨大的数
+据集上\textbf{均取得了最优的 F1-Score 和 AUC}，证明了其强大的跨域泛化能力：
+\begin{itemize}
+    \item 在 \textbf{AIT Alert} 数据集中，数据主要由安全设备的告警日志组成，
+    且存在极端的长尾分布（大量重复 Head 告警 vs 稀有 Tail 攻击）。传统模型如 Om
+    niAnomaly 和 USAD 在此表现不佳（F1 低于 80\%），即便是 Anomaly Transformer 
+    其 F1-Score 也仅为 85.30\%。相比之下，本文方法将 F1-Score 大幅提升至 \textbf{88.45\%}，
+    AUC 突破 \textbf{91.20\%}。这表明通过提升稀疏样本的权重，模型成功识别了隐藏在海量日志中的非攻击性
+    长尾模式，显著提升了检测的准确性。
+    \item 在 \textbf{FLNET2023} 这种大规模现代流量数据集中，网络协议的多样性极
+    高。本文方法取得了 \textbf{90.15\%} 的 F1-Score，优于 GDN (87.55\%) 和 Anomaly 
+    Transformer (89.60\%)。这说明 IED 加权机制有效地在特征空间中为“冷门协议”保留了足够的几
+    何空间，避免了因“高频流量主导”导致稀有正常流量被挤出决策边界（Decision Boundary），在复杂
+    流量环境下仍能维持高水平的检测性能。
+\end{itemize}
 
-3. 与时序注意力模型的对比与鲁棒性 (AUC-ROC) Anomaly Transformer 凭借强大的时序关联
-建模能力，在 Recall 指标上表现极其强劲。然而，其 Precision 相对受到长尾分布的影响。本
-文方法在 PSM 数据集上的 AUC 达到 97.10\%，略优于 Anomaly Transformer 的 96.55\%。
-这表明，虽然本文采用的是非序列的超球体聚类框架，但通过引入多样性加权，模型输出的异常得分
-（Anomaly Score）在全局分布上具有更好的区分度，能够更鲁棒地将正常长尾样本与真实攻击样本分离开来。
+3. 综合性能与鲁棒性
+从整体趋势来看，与当前基于注意力机制的最先进模型（Anomaly Transformer）相比，IED-Deep SV
+DD 展现出了更优的综合鲁棒性。
+虽然 Anomaly Transformer 凭借强大的时序关联建模能力在部分纯时序数据集（如 SMD 的 F1）上
+表现强劲，但在 \textbf{I-Sec-IDS} 等高噪声混合流量数据集中，其优势有所减弱（F1 为 91.20\%）。
+相比之下，IED-Deep SVDD 在 I-Sec-IDS 上取得了 \textbf{92.05\%} 的 F1-Score 和
+ \textbf{94.10\%} 的 AUC。
+这得益于本文的超球体聚类与中心动态校正机制，该机制有效滤除了背景流量中的随机噪声干扰。实
+验数据表明（本文方法在 5 个数据集中的 AUC 均为最高），基于几何距离的加权超球体模型在处理高噪
+、非平稳及长尾分布数据时，具备比纯时序依赖模型更强的鲁棒性与稳定性。
 
 
 \subsection{消融实验}
@@ -738,6 +774,68 @@ Recall 也从 95.05\% 提升至 96.60\%。
 紧凑且连贯的球状结构，长尾样本被有效拉回至正常类簇内部，使正常样本与异常样本之间形成了更清晰的
 间隔区域（Margin）。这一几何结构上的改善，从直观角度解释了模型在 Precision 与 AUC 指标上
 的显著提升。
+
+\subsection{参数实验}
+为了评估模型性能对关键超参数的依赖程度，验证 IED-Deep SVDD 框架的鲁棒性，本节在 SMD 数据集上
+针对两个核心超参数进行了敏感性分析：(1) 多样性敏感系数 (Diversity Sensitivity Coefficient
+, $\beta$)，用于控制长尾样本在损失函数中的权重增益幅度；(2) 特征中心更新率 (Center Update R
+ate, $\alpha$)，用于控制 EMA 策略中球心移动的平滑程度。实验采用 F1-Score 作为主要衡量指标。
+
+1.多样性敏感系数 $\beta$ 的影响
+
+参数 $\beta$ 决定了模型对样本稀疏度的敏感程度（见公式 \ref{equ:3-5}）。
+本文在范围 $\beta \in [0, 3.0]$ 内以 0.5 为步长进行测试，
+实验结果如图 \ref{fig:params}(a) 所示。
+
+\textbf{趋势分析：}  
+随着 $\beta$ 从 0 增加至 1.5，模型的 F1-Score 呈现显著上升趋势。
+当 $\beta = 0$ 时，模型退化为无加权的 Base Model，性能处于最低点。
+随着 $\beta$ 的增大，模型逐渐关注稀疏区域的正常样本，
+决策边界随之扩展，从而有效降低了误报率。
+
+\textbf{极值点与性能下降：}  
+当 $\beta \approx 1.5$ 时，模型性能达到最优。
+然而，当 $\beta$ 进一步增大（$>2.0$）时，F1-Score 出现下降趋势。
+其原因在于过大的 $\beta$ 会显著放大权重 $w_i$ 的方差，
+使模型过度关注极度稀疏的样本（其中可能包含噪声或离群点），
+从而导致超球体被过度拉伸，破坏了对核心正常模式的紧凑刻画。
+
+\textbf{结论：}  
+适度的 $\beta$ 取值（$1.0 \sim 1.5$）能够在头部样本与尾部样本之间取得良好平衡，
+表明模型需要合理的“长尾激励”，但必须避免对边缘噪声的过度拟合。
+
+2.特征中心更新率 $\alpha$ 的影响
+
+参数 $\alpha$ 控制特征中心 $c$ 在批次训练过程中的更新动量
+（见公式 \ref{eq:ema_update}）。
+本文在范围 $\alpha \in [0.01, 0.7]$ 内选取对数尺度上的典型取值进行测试，
+实验结果如图 \ref{fig:params}(b) 所示。
+
+\textbf{趋势分析：}  
+当 $\alpha$ 取值较小（$\alpha < 0.05$）时，
+特征中心更新过于迟缓，难以及时适应经过加权校正后的数据流形分布，
+导致模型收敛速度较慢，最终性能受限。
+
+当 $\alpha$ 处于适中区间（$0.05 \le \alpha \le 0.2$）时，
+模型性能达到峰值并保持相对稳定。
+这表明该区间内的 EMA 更新策略既能够跟踪数据分布的变化，
+又能够有效抑制 mini-batch 带来的随机噪声。
+
+当 $\alpha$ 过大（$\alpha > 0.3$）时，模型性能出现明显下降。
+这是由于特征中心过度受单个 mini-batch 随机性的影响，
+导致球心在特征空间中发生剧烈震荡（Oscillation），
+难以稳定收敛至全局最优的几何位置。
+
+\textbf{结论：}  
+较小的中心更新率（如 $\alpha = 0.1$）有助于维持训练过程的稳定性，
+进一步验证了 EMA 策略在特征中心动态校正中的必要性。
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.6]{fig/chapter3/参数实验.png}
+	\caption{参数实验结果}
+	\label{fig:params}
+\end{figure}
 
 
 \section{本章小结}
