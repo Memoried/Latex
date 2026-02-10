@@ -1,102 +1,82 @@
 \begin{cabstract}
-    随着常规天然气资源的逐渐枯竭，全球能源开发的重心正逐步转向非常规储层，尤其是页岩气。
-    中国在四川盆地、鄂尔多斯盆地和塔里木盆地等地拥有极为丰富的页岩气资源，
-    这些资源为国家能源储备提供了重要支撑。
-    然而，页岩气的开采面临着诸多技术挑战，其中井筒积液问题尤为突出。
-    页岩气储层的地质特征复杂，孔隙小、裂缝少且渗透率低，导致气体释放缓慢。
-    当气体携液能力不足以带出液体时，液体就会在井筒内积聚，最终形成积液。
-    如何有效解决井筒积液问题，已成为页岩气开采中亟待突破的关键技术难题。
-    目前，数据驱动方法在井筒积液检测领域展现出巨大潜力，但实际应用中仍面临诸多挑战。
-    有监督学习难以获取足够标签数据，无监督学习难以设定异常阈值且容易误归类，
-    而国内页岩气藏的非均质性进一步限制了数据驱动模型的检测效果。
-    此外，数据驱动模型在生产环境中还面临数据泄露和恶意攻击等安全风险，现有防御措施仍不够健壮。
-    为有效应对页岩气井筒积液检测中的复杂挑战，本研究开发了一套系统化的创新技术框架。
+    随着互联网技术的飞速发展，网络流量呈现出海量化、复杂化及高动态性的特征，
+    网络安全威胁日益严峻。传统的网络异常流量检测方法往往依赖于完备的标签数据
+    ，难以应对实际网络环境中普遍存在的流量“长尾分布”特性以及日益增多的“未知
+    攻击”威胁。针对现有方法在稀疏正常样本覆盖不足及复杂分布拟合能力受限等问题，
+    本文以无监督学习为核心技术路线，深入研究了基于加权超球体学习和多模式聚类的异
+    常检测算法，并设计实现了一套网络流量异常数据检测系统。本文的主要研究内容如下：
 
-    首先，针对现有学习策略的局限性，提出了一种基于半监督学习的二阶段积液检测模型，旨在实现积液的高效检测与严重程度分级。
-    在第一阶段，采用基于长短期记忆网络的自编码器和动态阈值算法来识别积液数据。
-    在第二阶段，构建了一种组合神经网络，包括双注意力增强模块、多随机卷积核变换网络和多层感知机，
-    用于对积液的严重程度进行精确分级。其中，双注意力增强模块通过块间和块内注意力机制，
-    能够自适应地提取关键特征，显著提升特征表达能力。
-    多随机卷积核变换网络则利用随机卷积核对特征图进行处理，进一步提取特征值，
-    为最终的严重程度分级提供有力支持。此外，为了充分利用有限的标签数据，
-    引入了半监督学习策略，通过伪标签生成和迭代训练，显著提升了模型在少量标签数据情况下的性能。
-    在三个独立数据集上，模型的平均F1得分分别达到了0.82、0.83和0.86。
+    首先，针对正常业务流量中的长尾分布导致传统单分类模型（如Deep SVDD）特征中心
+    偏移及高误报率问题，提出了一种基于实例多样性加权的无监督超球体学习方法（IED-
+    Deep SVDD）。该方法引入实例欧氏距离（IED）作为无监督的多样性度量指标，设计了
+    多样性感知加权损失函数，通过动态调节不同密度样本对模型训练的贡献度，引导超球体
+    边界自适应扩张。同时，引入指数滑动平均（EMA）策略平滑更新特征中心，有效缓解了由
+    高频背景流量主导的中心偏移问题，显著提升了模型对长尾分布下稀疏正常流量的包容性与
+    检测精度。
 
-    其次，针对页岩气藏的非均质性问题，本研究提出了一种基于联邦学习的页岩气井积液检测模型协同优化方案。
-    由于页岩气藏不同区块的地质条件和施工工艺存在显著差异，
-    这使得基于单一全局模型的联邦学方案难以适应所有局部数据特征。为此，我们设计了一种局部化中心模型方案。
-    该方案基于本研究所提出动态双向权重调节机制，确保每个参与方能够根据本地数据特征训练出贴合的模型。
-    动态双向权重调节机制包含中心化加权聚合算法和知识迁移权重调节算法。
-    前者根据各参与方的模型质量来动态调整其在局部化中心模型中的权重，
-    后者根据各参与方模型的贡献率来调节知识迁移过程中的知识比例。
-    此外，我们还通过微调进一步优化了局部化中心模型性能，使其更好地适应本地数据分布。
-    在三个数据集上，经过协同优化后的模型平均F1得分分别提高了0.04、0.03和0.01。
+    其次，针对网络流量中正常行为模式多样且异常类型未知的特点，提出了一种面向未知攻
+    击的多模式无监督聚类检测框架。该框架打破了传统方法采用单一聚类中心的建模局限，
+    通过构建多个潜在的正常行为模式中心，共同描述网络流量的复杂分布结构。模型基于样
+    本到各中心的最短距离构建判别机制，实现了对多模态正常流量的精细化拟合。实验结果
+    表明，该框架在无需先验异常标签的情况下，能够有效识别偏离正常模式的未知攻击，增
+    强了模型在复杂网络环境下的泛化能力与鲁棒性。
 
-    最后，在数据驱动模型的安全性方面，本研究提出了一种综合性的隐私保护与攻击防御方案。
-    本研究将生成对抗网络与差分隐私相结合，
-    通过设计鉴别器损失和噪声尺度正则化损失两个损失函数，实现了隐私保护与模型性能之间的平衡。
-    实验结果表明，与仅使用差分隐私相比，在隐私保护强度几乎不变的情况下，模型平均F1得分提升了约0.03；
-    针对投毒攻击，我们提出了基于注意力蒸馏的知识迁移算法和中心化弹性聚合算法，
-    显著增强了模型在复杂攻击环境下的鲁棒性。在只用5\%干净数据微调下，
-    5种数据投毒攻击的成功率均低于10\%，而模型投毒攻击导致的平均F1得分下降幅度控制在0.05以内。
+    最后，为了验证算法的工程可行性，设计并实现了一套集数据实时采集、自动化预处理、
+    模型在线推理及可视化告警于一体的网络流量异常数据检测系统。系统基于FastAPI框
+    架、Kafka消息队列及ElasticSearch搜索引擎等现代技术栈构建。经Apache JMeter
+    高并发性能测试，系统在模拟千级并发用户的高负载场景下，依然能够保持毫秒级的响应延
+    迟与稳定的吞吐量，证明了本文所提算法及系统架构在实际网络安全运维中的应用价值。
     
-    \ckeywords{井筒积液；数据驱动；联邦学习；隐私保护；投毒攻击防御}
+    \ckeywords{网络流量异常检测；无监督学习；长尾分布；多模式聚类}
 \end{cabstract}
 
 \begin{eabstract}
-    With the gradual depletion of conventional natural gas resources, 
-    the focus of global energy development is gradually shifting towards unconventional reservoirs, especially shale gas. 
-    China has extremely rich shale gas resources in Sichuan Basin, Ordos Basin and Tarim Basin, 
-    which provide important support for national energy reserves. 
-    However, the extraction of shale gas faces many technical challenges, among which the problem of liquid loading is particularly prominent.
-    The geological characteristics of shale gas reservoirs are complex, with small pores, few fractures, and low permeability, 
-    resulting in slow gas release. When the gas carrying capacity is insufficient to remove the liquid, 
-    the liquid will accumulate in the wellbore, eventually forming a liquid loading. 
-    How to effectively solve the problem of liquid loading has become a key technical challenge that urgently needs to be overcome in shale gas extraction. 
-    At present, data-driven methods have shown great potential in the field of liquid loading detection, 
-    but there are still many challenges in practical applications. Supervised learning is difficult to obtain sufficient labeled data, 
-    unsupervised learning is difficult to set anomaly thresholds and prone to misclassification, 
-    while the heterogeneity of shale gas reservoirs in China further limits the detection performance of data-driven models. 
-    In addition, data-driven models also face security risks such as data breaches and malicious attacks in production environments, 
-    and existing defense measures are still not robust enough.
-    To effectively address the complex challenges in shale gas liquid loading detection, 
-    this study has developed a systematic and innovative technology framework. 
-    
-    Firstly, a two-stage liquid loading detection model based on semi supervised learning is proposed to address the limitations of existing learning strategies, 
-    aiming to achieve efficient detection and severity grading of effusion. 
-    In the first stage, autoencoders based on long short-term memory networks and dynamic thresholding algorithms are used to identify liquid loading data. 
-    In the second stage, a composite neural network was constructed, including a dual attention enhancement module, 
-    a multi random convolutional kernel transformation network, and a multi-layer perceptron, 
-    for accurately grading the severity of liquid loading. Among them, 
-    the dual attention enhancement module can adaptively extract key features and significantly improve feature expression ability through inter block and intra block attention mechanisms. 
-    The multi random convolution kernel transformation network utilizes random convolution kernels to process feature maps and further extract feature values, 
-    providing strong support for the final severity grading. In addition, in order to fully utilize limited labeled data, 
-    a semi supervised learning strategy was introduced, 
-    which significantly improved the performance of the model in the case of a small amount of labeled data through pseudo label generation and iterative training. 
-    On three independent datasets, the average F1 scores of the model reached 0.82, 0.83, and 0.86, respectively.
+    With the rapid development of Internet technology, network traffic presents 
+    characteristics of massive scale, complexity, and high dynamics, leading to 
+    increasingly severe network security threats. Traditional network traffic 
+    anomaly detection methods often rely on complete labeled data, making it 
+    difficult to cope with the "long-tailed distribution" of traffic and the 
+    threat of "unknown attacks" prevalent in real network environments. Addressing 
+    the limitations of existing methods in covering sparse normal samples and 
+    fitting complex distributions, this thesis focuses on unsupervised learning. 
+    It conducts in-depth research on anomaly detection algorithms based on weighted 
+    hypersphere learning and multi-modal clustering, and designs and implements a 
+    network traffic anomaly data detection system. The main research contents of 
+    this thesis are as follows:
 
-    Secondly, in response to the heterogeneity of shale gas reservoirs, 
-    this study proposes a collaborative optimization scheme for shale gas well liquid loading detection model based on federated learning. 
-    Due to significant differences in geological conditions and construction techniques among different blocks of shale gas reservoirs, 
-    federated learning schemes based on a single global model are difficult to adapt to all local data features. 
-    For this purpose, we have designed a localized center model scheme. 
-    This scheme is based on the dynamic bidirectional weight adjustment mechanism proposed by our research institute, 
-    ensuring that each participant can train a suitable model based on local data features. 
-    The dynamic bidirectional weight adjustment mechanism includes centralized weighted aggregation algorithm and knowledge transfer weight adjustment algorithm. 
-    The former dynamically adjusts its weight in the localized center model based on the model quality of each participant, 
-    while the latter adjusts the knowledge proportion in the knowledge transfer process based on the contribution rate of each participant's model. 
-    In addition, we further optimized the performance of the localized center model by fine-tuning it to better adapt to the local data distribution. 
-    On three datasets, the average F1 score of the model after collaborative optimization increased by 0.04, 0.03, and 0.01, respectively.
+    Firstly, aiming at the problem of feature center offset and high false alarm 
+    rate in traditional one-class classification models (such as Deep SVDD) caused 
+    by the long-tailed distribution in normal business traffic, a Diversity-Weighted 
+    Self-Supervised Hypersphere Learning method (IED-Deep SVDD) is proposed. This 
+    method introduces Instance Euclidean Distance (IED) as an unsupervised diversity 
+    metric and designs a diversity-aware weighted loss function to dynamically adjust 
+    the contribution of samples with different densities to model training, guiding 
+    the adaptive expansion of the hypersphere boundary. Meanwhile, the Exponential 
+    Moving Average (EMA) strategy is introduced to smoothly update the feature center, 
+    effectively mitigating the center offset problem dominated by high-frequency background 
+    traffic, and significantly improving the model's tolerance and detection accuracy 
+    for sparse normal traffic under long-tailed distribution.
 
-    Finally, in terms of the security of data-driven models, this study proposes a comprehensive privacy protection and attack defense scheme. 
-    This study combines generative adversarial networks with differential privacy, 
-    and achieves a balance between privacy protection and model performance by designing two loss functions: 
-    discriminator loss and noise scale regularization loss. The experimental results show that compared with using only differential privacy, 
-    the average F1 score of the model increased by about 0.03 while the privacy protection strength remained almost unchanged; 
-    We propose a knowledge transfer algorithm based on attention distillation and a centralized elastic aggregation algorithm for poisoning attacks, 
-    which significantly enhance the robustness of the model in complex attack environments. 
-    Under the fine-tuning of only 5\% clean data, the success rates of all 5 data poisoning attacks were below 10\%, 
-    while the average F1 score decrease caused by model poisoning attacks was controlled within 0.05.
+    Secondly, aiming at the characteristics of diverse normal behavior patterns and 
+    unknown anomaly types in network traffic, a Multi-modal Unsupervised Clustering 
+    Detection Framework for unknown attacks is proposed. This framework breaks the 
+    limitation of traditional methods using a single cluster center modeling assumption. 
+    By constructing multiple potential normal behavior pattern centers, it jointly describes 
+    the complex distribution structure of network traffic. The model builds a discrimination 
+    mechanism based on the shortest distance from samples to each center, achieving refined 
+    fitting of multi-modal normal traffic. Experimental results show that, without prior 
+    anomaly labels, this framework can effectively identify unknown attacks deviating from 
+    normal patterns, enhancing the model's generalization ability and robustness in complex 
+    network environments.
 
-    \ekeywords{Liquid loading；Data-driven； Federated learning；Privacy protectio；Poisoning attack defense}
+    Finally, to verify the engineering feasibility of the algorithms, a network traffic 
+    anomaly data detection system integrating real-time data collection, automated preprocessing, 
+    online model inference, and visual alerting is designed and implemented. The system is built 
+    based on modern technology stacks such as the FastAPI framework, Kafka message queue, and 
+    ElasticSearch engine. Through Apache JMeter high-concurrency performance testing, the system 
+    maintains millisecond-level response latency and stable throughput under high-load scenarios 
+    simulating thousands of concurrent users, proving the application value of the proposed 
+    algorithms and system architecture in actual network security operations.
+
+    \ekeywords{Network Traffic Anomaly Detection；Unsupervised Learning；Long-tailed Distribution；Multi-modal Clustering}
 \end{eabstract}
