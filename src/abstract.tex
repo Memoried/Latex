@@ -6,11 +6,11 @@
     本文以无监督学习为核心技术路线，深入研究了基于加权超球体学习和多模式聚类的异
     常检测算法，并设计实现了一套网络流量异常数据检测系统。本文的主要研究内容如下：
 
-    首先，针对正常业务流量中的长尾分布导致传统单分类模型（如Deep SVDD）特征中心
-    偏移及高误报率问题，提出了一种基于实例多样性加权的无监督超球体学习方法（IED-
-    Deep SVDD）。该方法引入实例欧氏距离（IED）作为无监督的多样性度量指标，设计了
+    首先，针对正常业务流量中的长尾分布导致传统单分类模型特征中心
+    偏移及高误报率问题，提出了一种基于实例多样性加权的无监督超球体学习方法。该方法引
+    入实例欧氏距离作为无监督的多样性度量指标，设计了
     多样性感知加权损失函数，通过动态调节不同密度样本对模型训练的贡献度，引导超球体
-    边界自适应扩张。同时，引入指数滑动平均（EMA）策略平滑更新特征中心，有效缓解了由
+    边界自适应扩张。同时，引入指数滑动平均策略平滑更新特征中心，有效缓解了由
     高频背景流量主导的中心偏移问题，显著提升了模型对长尾分布下稀疏正常流量的包容性与
     检测精度。
 
@@ -27,56 +27,37 @@
     高并发性能测试，系统在模拟千级并发用户的高负载场景下，依然能够保持毫秒级的响应延
     迟与稳定的吞吐量，证明了本文所提算法及系统架构在实际网络安全运维中的应用价值。
     
-    \ckeywords{网络流量异常检测；无监督学习；长尾分布；多模式聚类}
+    \ckeywords{网络流量异常检测；无监督学习；长尾分布；多聚类中心}
 \end{cabstract}
 
 \begin{eabstract}
-    With the rapid development of Internet technology, network traffic presents 
-    characteristics of massive scale, complexity, and high dynamics, leading to 
-    increasingly severe network security threats. Traditional network traffic 
-    anomaly detection methods often rely on complete labeled data, making it 
-    difficult to cope with the "long-tailed distribution" of traffic and the 
-    threat of "unknown attacks" prevalent in real network environments. Addressing 
-    the limitations of existing methods in covering sparse normal samples and 
-    fitting complex distributions, this thesis focuses on unsupervised learning. 
-    It conducts in-depth research on anomaly detection algorithms based on weighted 
-    hypersphere learning and multi-modal clustering, and designs and implements a 
-    network traffic anomaly data detection system. The main research contents of 
-    this thesis are as follows:
+    With the rapid development of Internet technology, network traffic exhibits characteristics of massive volume, complexity, and high dynamism,
+    The threat of cybersecurity is becoming increasingly severe. Traditional methods for detecting abnormal network traffic often rely on comprehensive labeled data
+    It is difficult to cope with the ubiquitous "long-tail distribution" characteristic of traffic in actual network environments, as well as the increasing number of "unknowns"
+    "Attack" threat. Addressing the issues of insufficient coverage of sparse normal samples and limited ability to fit complex distributions in existing methods,
+    This article takes unsupervised learning as the core technical approach, and conducts in-depth research on the differences based on weighted hypersphere learning and multi-mode clustering
+    We frequently evaluate algorithms and have designed and implemented a network traffic anomaly detection system. The main research contents of this paper are as follows:
 
-    Firstly, aiming at the problem of feature center offset and high false alarm 
-    rate in traditional one-class classification models (such as Deep SVDD) caused 
-    by the long-tailed distribution in normal business traffic, a Diversity-Weighted 
-    Self-Supervised Hypersphere Learning method (IED-Deep SVDD) is proposed. This 
-    method introduces Instance Euclidean Distance (IED) as an unsupervised diversity 
-    metric and designs a diversity-aware weighted loss function to dynamically adjust 
-    the contribution of samples with different densities to model training, guiding 
-    the adaptive expansion of the hypersphere boundary. Meanwhile, the Exponential 
-    Moving Average (EMA) strategy is introduced to smoothly update the feature center, 
-    effectively mitigating the center offset problem dominated by high-frequency background 
-    traffic, and significantly improving the model's tolerance and detection accuracy 
-    for sparse normal traffic under long-tailed distribution.
+    Firstly, the long-tail distribution in normal business traffic leads to the feature center of traditional single-classification models
+    To address the issues of bias and high false alarm rate, an unsupervised hypersphere learning method based on instance diversity weighting is proposed. This method introduces
+    The Euclidean distance of instances is designed as an unsupervised diversity metric
+    The diversity-aware weighted loss function dynamically adjusts the contribution of samples with different densities to model training, guiding the hypersphere
+    Boundary adaptive expansion. At the same time, the introduction of an exponential moving average strategy to smoothly update the feature center effectively mitigates the impact of
+    The center-biased problem dominated by high-frequency background traffic significantly enhances the model's inclusiveness and robustness towards sparse normal traffic under long-tail distribution
+    Detection accuracy.
 
-    Secondly, aiming at the characteristics of diverse normal behavior patterns and 
-    unknown anomaly types in network traffic, a Multi-modal Unsupervised Clustering 
-    Detection Framework for unknown attacks is proposed. This framework breaks the 
-    limitation of traditional methods using a single cluster center modeling assumption. 
-    By constructing multiple potential normal behavior pattern centers, it jointly describes 
-    the complex distribution structure of network traffic. The model builds a discrimination 
-    mechanism based on the shortest distance from samples to each center, achieving refined 
-    fitting of multi-modal normal traffic. Experimental results show that, without prior 
-    anomaly labels, this framework can effectively identify unknown attacks deviating from 
-    normal patterns, enhancing the model's generalization ability and robustness in complex 
-    network environments.
+    Secondly, given the diverse normal behavior patterns and unknown types of anomalies in network traffic, a method oriented towards unknown attacks is proposed
+    A multi-mode unsupervised clustering detection framework. This framework breaks the modeling limitations of traditional methods that adopt a single clustering center,
+    By constructing multiple potential centers of normal behavior patterns, the complex distribution structure of network traffic is jointly described. The model is based on samples
+    A mechanism for determining the shortest distance to each center has been established, achieving a refined fitting of multimodal normal traffic. experimental results
+    It demonstrates that the framework can effectively identify unknown attacks deviating from the normal pattern without requiring prior anomaly labels, and enhance
+    It enhances the generalization ability and robustness of the model in complex network environments.
 
-    Finally, to verify the engineering feasibility of the algorithms, a network traffic 
-    anomaly data detection system integrating real-time data collection, automated preprocessing, 
-    online model inference, and visual alerting is designed and implemented. The system is built 
-    based on modern technology stacks such as the FastAPI framework, Kafka message queue, and 
-    ElasticSearch engine. Through Apache JMeter high-concurrency performance testing, the system 
-    maintains millisecond-level response latency and stable throughput under high-load scenarios 
-    simulating thousands of concurrent users, proving the application value of the proposed 
-    algorithms and system architecture in actual network security operations.
+    Finally, to verify the engineering feasibility of the algorithm, a set of functions including real-time data collection, automated preprocessing
+    A network traffic anomaly detection system integrating online model inference and visual alerting. The system is built on the FastAPI framework
+    Built with modern technology stacks such as Docker, Kafka message queue, and ElasticSearch search engine. Tested with Apache JMeter
+    High concurrency performance testing: The system can still maintain millisecond-level response latency under high load scenarios simulating thousands of concurrent users
+    The late and stable throughput demonstrates the practical application value of the algorithm and system architecture proposed in this paper in network security operation and maintenance.
 
-    \ekeywords{Network Traffic Anomaly Detection；Unsupervised Learning；Long-tailed Distribution；Multi-modal Clustering}
+    \ckeywords{Network traffic anomaly detection; Unsupervised learning; Long-tail distribution; Multiple clustering centers}
 \end{eabstract}
