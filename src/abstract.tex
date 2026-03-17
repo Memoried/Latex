@@ -1,63 +1,77 @@
 \begin{cabstract}
-    随着互联网技术的飞速发展，网络流量呈现出海量化、复杂化及高动态性的特征，
-    网络安全威胁日益严峻。传统的网络异常流量检测方法往往依赖于完备的标签数据
-    ，难以应对实际网络环境中普遍存在的流量“长尾分布”特性以及日益增多的“未知
-    攻击”威胁。针对现有方法在稀疏正常样本覆盖不足及复杂分布拟合能力受限等问题，
-    本文以无监督学习为核心技术路线，深入研究了基于加权超球体学习和多模式聚类的异
-    常检测算法，并设计实现了一套网络流量异常数据检测系统。本文的主要研究内容如下：
+    \thispagestyle{empty}
+    随着工业互联网与企业数字化转型的深度推进，网络流量呈现出规模海量化、特征复杂化以及攻击手段
+    隐蔽化的趋势，网络空间安全已成为国家战略的核心基石 。然而，面对日益复杂的网络环境，传统的异
+    常检测技术面临着严峻挑战：首先，真实网络流量中正常行为呈现显著的“长尾分布”特性，传统无监督
+    单类模型易受高频背景流量主导，导致特征中心向高密度区域偏移，使得处于长尾的稀疏正常业务流量极
+    易被错误识别为异常 ；其次，正常业务流量往往包含多种截然不同的通信模式，单一中心建模方法难以精
+    准刻画其多模态、异构的复杂分布结构，使得零日攻击与高级持续性威胁等未知攻击极易潜
+    伏于正常模式的间隙之中逃避检测 ；最后，前沿的检测模型多停留在离线实验验证阶段，缺乏能够支撑多
+    源数据实时采集、处理、推理并实现可视化闭环的工程化落地系统 。针对上述三大关键痛点，本文以无监督
+    学习为核心技术路线，深入挖掘网络流量的内在分布规律，分别从特征权重自适应优化、多中心聚类分布建模
+    以及工程化平台架构三个维度展开了系统性的研究与实践 。本文的主要工作和创新点如下：
 
-    首先，针对正常业务流量中的长尾分布导致传统单分类模型特征中心
-    偏移及高误报率问题，提出了一种基于实例多样性加权的无监督超球体学习方法。该方法引
-    入实例欧氏距离作为无监督的多样性度量指标，设计了
-    多样性感知加权损失函数，通过动态调节不同密度样本对模型训练的贡献度，引导超球体
-    边界自适应扩张。同时，引入指数滑动平均策略平滑更新特征中心，有效缓解了由
-    高频背景流量主导的中心偏移问题，显著提升了模型对长尾分布下稀疏正常流量的包容性与
-    检测精度。
+    （1）、 针对正常网络流量长尾分布引发的特征中心偏移与高误报率问题，本文提出了一种基于多样性加权的无
+    监督超球体网络流量异常检测框架。该方法创新性地构建了小波-分块异常感知网络，将小波时频分析与序
+    列分块机制深度融合，以有效过滤非平稳高频噪声并高效提取具备高区分度的低维流形特征 。在此基础上，引
+    入实例欧氏距离来量化样本在特征空间中的局部稀缺性，并构建了多样性感知加权损失函数 。该机制
+    能够依据样本的分布密度动态调整不同频次模式对模型训练的反馈压力，主动纠正由高频“头部”样本主导的决
+    策中心偏移问题，引导超球体边界自适应扩张，从而在无监督条件下有效包容并保护长尾分布下的稀有正常模
+    式不受误判 。
 
-    其次，针对网络流量中正常行为模式多样且异常类型未知的特点，提出了一种面向未知攻
-    击的多模式无监督聚类检测框架。该框架打破了传统方法采用单一聚类中心的建模局限，
-    通过构建多个潜在的正常行为模式中心，共同描述网络流量的复杂分布结构。模型基于样
-    本到各中心的最短距离构建判别机制，实现了对多模态正常流量的精细化拟合。实验结果
-    表明，该框架在无需先验异常标签的情况下，能够有效识别偏离正常模式的未知攻击，增
-    强了模型在复杂网络环境下的泛化能力与鲁棒性。
+    （2）、 针对复杂网络环境下多类异构正常流量共存、且未知攻击易逃避单一模型检测的问题，本文构建了一
+    种基于多聚类中心距离加权的无监督网络异常流量检测框架 。该框架打破了传统模型假定正常流量服从
+    单一分布的理论局限，创新性地引入多中心聚类建模思想 。通过深度挖掘流量序列的全局时序依赖与内在演化
+    规律，该方法利用多个潜在的聚类中心共同刻画正常流量在特征空间中的多样化分布区域 。通过综合衡量样
+    本与所有模式中心的距离关联度来计算异常得分，这一联合判别机制不仅有效覆盖了处于分布边缘的合法业务
+    样本，更显著压缩了未知攻击潜伏的特征空间，大幅提升了模型在缺乏异常标签条件下应对未知变种威胁时的
+    拟合精度与检测鲁棒性 。
 
-    最后，为了验证算法的工程可行性，设计并实现了一套集数据实时采集、自动化预处理、
-    模型在线推理及可视化告警于一体的网络流量异常数据检测系统。系统基于FastAPI框
-    架、Kafka消息队列及ElasticSearch搜索引擎等现代技术栈构建。经Apache JMeter
-    高并发性能测试，系统在模拟千级并发用户的高负载场景下，依然能够保持毫秒级的响应延
-    迟与稳定的吞吐量，证明了本文所提算法及系统架构在实际网络安全运维中的应用价值。
+    （3）、 针对理论算法向实际工业应用转化困难的痛点，本文设计并实现了一套端到端的网络流量异常数据检测系统
+    。该系统以现代软件工程架构为指导，将本文提出的核心检测算法模块化并集成为检测引擎，彻底打破了离线理
+    论模型的应用壁垒 。系统全面涵盖了多源数据实时接入与清洗预处理、模型全生命周期管理与在线推理、低延
+    迟异常智能告警以及多维特征空间可视化大屏等核心功能 。通过全流程的自动化闭环设计，该系统成功将底
+    层算法创新转化为可落地的工程实践，在真实并发网络负载场景下展现了出色的实时响应能力与高吞吐量，为
+    复杂环境下的网络智能运维与态势感知提供了坚实可行的系统级解决方案 。
     
-    \ckeywords{网络流量异常检测；无监督学习；长尾分布；多聚类中心}
+    \ckeywords{异常流量检测；无监督学习；长尾分布；多中心聚类}
 \end{cabstract}
 
 \begin{eabstract}
-    With the rapid development of Internet technology, network traffic exhibits characteristics of massive volume, complexity, and high dynamism,
-    The threat of cybersecurity is becoming increasingly severe. Traditional methods for detecting abnormal network traffic often rely on comprehensive labeled data
-    It is difficult to cope with the ubiquitous "long-tail distribution" characteristic of traffic in actual network environments, as well as the increasing number of "unknowns"
-    "Attack" threat. Addressing the issues of insufficient coverage of sparse normal samples and limited ability to fit complex distributions in existing methods,
-    This article takes unsupervised learning as the core technical approach, and conducts in-depth research on the differences based on weighted hypersphere learning and multi-mode clustering
-    We frequently evaluate algorithms and have designed and implemented a network traffic anomaly detection system. The main research contents of this paper are as follows:
+    \thispagestyle{empty}
+    With the deepening of the industrial Internet and the digital transformation of enterprises, network traffic has shown a large scale, complex characteristics and means of attack. 
+    With the trend of concealment, cyberspace security has become the core cornerstone of national strategy. However, in the face of increasingly complex network environment, the traditional difference 
+    Frequent detection technology faces severe challenges : First, normal behavior in real network traffic presents a significant ' long tail distribution ', which is traditionally unsupervised. 
+    The one-class model is susceptible to high-frequency background traffic, which leads to the shift of the feature center to the high-density region, making the sparse normal traffic pole in the long tail. 
+    It is easily misidentified as an anomaly ; secondly, normal traffic often contains a variety of distinct communication modes, and a single center modeling method is difficult to refine. 
+    Its multi-modal, heterogeneous and complex distribution structure makes unknown attacks such as zero-day attacks and high-level persistent threats extremely vulnerable. 
+    Escape detection in the gap of normal mode ; finally, most of the frontier detection models stay in the offline experimental verification stage, and lack of support. 
+    The source data real-time acquisition, processing, reasoning and implementation of visual closed-loop engineering landing system. In view of the above three key pain points, this paper uses unsupervised 
+    Learning is the core technology route, and the internal distribution law of network traffic is deeply explored. Adaptive optimization of feature weights and multi-center clustering distribution modeling are used respectively. 
+    Systematic research and practice have been carried out in the three dimensions of  and engineering platform architecture. The main work and innovations of this paper are as follows :
 
-    Firstly, the long-tail distribution in normal business traffic leads to the feature center of traditional single-classification models
-    To address the issues of bias and high false alarm rate, an unsupervised hypersphere learning method based on instance diversity weighting is proposed. This method introduces
-    The Euclidean distance of instances is designed as an unsupervised diversity metric
-    The diversity-aware weighted loss function dynamically adjusts the contribution of samples with different densities to model training, guiding the hypersphere
-    Boundary adaptive expansion. At the same time, the introduction of an exponential moving average strategy to smoothly update the feature center effectively mitigates the impact of
-    The center-biased problem dominated by high-frequency background traffic significantly enhances the model's inclusiveness and robustness towards sparse normal traffic under long-tail distribution
-    Detection accuracy.
+    Aiming at the problem of feature center offset and high false alarm rate caused by the long tail distribution of normal network traffic, this paper proposes a diversity-weighted non-negative 
+    Supervise hypersphere network traffic anomaly detection framework. This framework innovatively constructs a wavelet-block anomaly perception network, which combines wavelet time-frequency analysis and order. 
+    The column block mechanism is deeply fused to effectively filter non-stationary high-frequency noise and efficiently extract low-dimensional manifold features with high discrimination. On this basis, the introduction 
+    Instance Euclidean distance is used to quantify the local scarcity of samples in the feature space, and a diversity-aware weighted loss function is constructed. The mechanism 
+    It can dynamically adjust the feedback pressure of different frequency modes on model training according to the distribution density of samples, and actively correct the decision dominated by high-frequency ' head ' samples. 
+    The center offset problem guides the adaptive expansion of the hypersphere boundary, so as to effectively contain and protect the rare normal mode under the long tail distribution under unsupervised conditions. 
+    The formula is not misjudged.
 
-    Secondly, given the diverse normal behavior patterns and unknown types of anomalies in network traffic, a method oriented towards unknown attacks is proposed
-    A multi-mode unsupervised clustering detection framework. This framework breaks the modeling limitations of traditional methods that adopt a single clustering center,
-    By constructing multiple potential centers of normal behavior patterns, the complex distribution structure of network traffic is jointly described. The model is based on samples
-    A mechanism for determining the shortest distance to each center has been established, achieving a refined fitting of multimodal normal traffic. experimental results
-    It demonstrates that the framework can effectively identify unknown attacks deviating from the normal pattern without requiring prior anomaly labels, and enhance
-    It enhances the generalization ability and robustness of the model in complex network environments.
+    Aiming at the problem that multiple types of heterogeneous normal traffic coexist in a complex network environment, and unknown attacks are easy to evade single model detection, this paper constructs a 
+    An unsupervised network anomaly traffic detection framework based on multi-cluster center distance weighting. The framework breaks the traditional model assumption that normal traffic obeys 
+    The theoretical limitation of single distribution innovatively introduces the idea of multi-center clustering modeling. Deeply mining the global temporal dependencies and internal evolution of traffic sequences. 
+    This method uses multiple potential clustering centers to jointly characterize the diverse distribution areas of normal traffic in the feature space. By comprehensive measurement sample 
+    The distance correlation with all pattern centers is used to calculate the anomaly score. This joint discrimination mechanism not only effectively covers the legitimate business at the edge of the distribution. 
+    The  samples more significantly compress the feature space of unknown attack latent, and greatly improve the model 's ability to deal with unknown variant threats without abnormal labels. 
+    Fitting accuracy and detection robustness.
 
-    Finally, to verify the engineering feasibility of the algorithm, a set of functions including real-time data collection, automated preprocessing
-    A network traffic anomaly detection system integrating online model inference and visual alerting. The system is built on the FastAPI framework
-    Built with modern technology stacks such as Docker, Kafka message queue, and ElasticSearch search engine. Tested with Apache JMeter
-    High concurrency performance testing: The system can still maintain millisecond-level response latency under high load scenarios simulating thousands of concurrent users
-    The late and stable throughput demonstrates the practical application value of the algorithm and system architecture proposed in this paper in network security operation and maintenance.
-
-    \ckeywords{Network traffic anomaly detection; Unsupervised learning; Long-tail distribution; Multiple clustering centers}
+    Aiming at the difficulty of transforming theoretical algorithms into practical industrial applications, this paper designs and implements an end-to-end network traffic anomaly data detection system. 
+    . Guided by the modern software engineering architecture, the system modularizes and integrates the core detection algorithms proposed in this paper into a detection engine, completely breaking the offline mechanism. 
+    On the application barriers of the model. The system fully covers multi-source data real-time access and cleaning preprocessing, model life cycle management and online reasoning, and low latency. 
+    The core functions such as intelligent alarm of delay anomaly and large screen of multi-dimensional feature space visualization. Through the automatic closed-loop design of the whole process, the system successfully puts the bottom of the 
+    The layer algorithm innovation is transformed into a landing engineering practice, which shows excellent real-time response ability and high throughput in the real concurrent network load scenario. 
+    Network intelligent operation and situation awareness in complex environment provides a solid and feasible system-level solution.
+        
+    \ekeywords{Abnormal traffic detection; unsupervised learning; long-tailed distribution; multi-center clustering}
 \end{eabstract}
