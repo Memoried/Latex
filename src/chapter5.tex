@@ -216,29 +216,30 @@ create\_time & DATETIME & 非空 & 账号创建时间 \\
 
 2. 异常流量告警记录结构（anomaly\_log）
 
-海量的原始流量特征数据和 IED-WPAT 模型的实时推理结果主要序列化存储于 Elasticsearch 中，
-以支撑态势感知大屏的毫秒级检索需求。其核心文档结构需包含流量五元组及算法输出的异常判定指标。
-具体结构定义如表 \ref{tab:anomaly_log} 所示。
+海量的原始流量特征数据与双流检测架构的实时推理结果主要序列化存储于 Elasticsearch 中，
+以支撑态势感知大屏的毫秒级检索需求。具体数据结构设计如表 \ref{tab:anomaly_log} 所示。
 
 \begin{table}[htbp]
-\centering
-\caption{异常流量告警记录数据结构设计}
-\label{tab:anomaly_log}
-\begin{tabular}{p{2.5cm} p{3cm} p{2cm} p{6cm}}
-\toprule
-字段名称 & 数据类型 & 约束 & 说明 \\
-\midrule
-log\_id & VARCHAR(64) & 主键 & 告警记录唯一标识（UUID） \\
-timestamp & DATETIME & 非空 & 流量捕获与检测的时间戳 \\
-src\_ip & VARCHAR(45) & 非空 & 源 IP 地址（兼容 IPv4 与 IPv6） \\
-dst\_ip & VARCHAR(45) & 非空 & 目的 IP 地址 \\
-src\_port & INT & 非空 & 源端口号 \\
-dst\_port & INT & 非空 & 目的端口号 \\
-protocol & VARCHAR(20) & 非空 & 传输层协议类型（如 TCP, UDP） \\
-anomaly\_score & FLOAT & 非空 & IED-WPAT 模型计算的异常得分 \\
-cluster\_id & INT & 允许空 & 多中心聚类模型分配的簇编号 \\
-\bottomrule
-\end{tabular}
+    \centering
+    \caption{异常流量告警记录数据结构设计}
+    \label{tab:anomaly_log}
+    \begin{tabular}{l l c p{7.5cm}}
+        \toprule
+        字段名称 & 数据类型 & 约束 & 说明 \\
+        \midrule
+        log\_id & VARCHAR(64) & 主键 & 告警记录唯一标识（UUID） \\
+        timestamp & DATETIME & 非空 & 流量捕获与检测的时间戳 \\
+        src\_ip & VARCHAR(45) & 非空 & 源 IP 地址（兼容 IPv4 与 IPv6） \\
+        dst\_ip & VARCHAR(45) & 非空 & 目的 IP 地址 \\
+        src\_port & INT & 非空 & 源端口号 \\
+        dst\_port & INT & 非空 & 目的端口号 \\
+        protocol & VARCHAR(20) & 非空 & 传输层协议类型（如 TCP, UDP） \\
+        ied\_score & FLOAT & 非空 & IED-WPAT 模型计算的异常得分 \\
+        mc\_score & FLOAT & 非空 & MC-MaskTST 模型计算的异常得分 \\
+        global\_score & FLOAT & 非空 & 双流模型加权融合后的全局最终异常得分 \\
+        cluster\_id & INT & 允许空 & MC-MaskTST 模型为正常流量分配的簇编号 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 
 3. 模型配置与系统参数表（sys\_config）
@@ -268,62 +269,51 @@ update\_time & DATETIME & 非空 & 配置参数的最后修改时间 \\
 
 1. 用户登录与注册界面
 
-登录界面是系统的安全准入关口。设计上采用极简风格，背景动态渲染粒子特效以
-提升科技感。系统在此处集成了双重校验机制：前端利用正则表达式对邮箱格式与
-密码强度进行实时检测，后端则校验账号的唯一性与凭证的合法性。注册流程与登
-录流程无缝切换，用户注册成功后，系统会自动下发 JWT 令牌并跳转至主界面，
-如图~\ref{fig:login_page}~所示。
+如图\ref{fig:login_page}所示，登录界面作为安全关口，采用极
+简动态粒子背景设计。系统集成前后端双重校验：前端正则验证邮箱格式与密码
+强度，后端校验账号唯一性与凭证合法性。
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{fig/chapter5/login_interface.png}
+\includegraphics[width=0.93\linewidth]{fig/chapter5/login_interface.png}
 \caption{系统用户登录与注册界面}
 \label{fig:login_page}
 \end{figure}
 
 2. 流量态势感知大屏
 
-态势感知大屏是本系统的可视化核心，旨在让运维人员“一屏览全局”。该界面集成 
-ECharts 图表库，通过轮询接口实时从 Elasticsearch 拉取聚合数据。界面布
-局分为三个区域：顶部展示当前系统的关键指标（如总流量、今日告警数、防御拦截
-率）；中部左侧绘制“24 小时流量趋势折线图”，直观反映流量的波峰波谷；中部右
-侧展示“攻击源 Top IP 排名”及“攻击类型分布饼图”。大屏界面如图~\ref{fig:dashboard}~所示，
-能够帮助管理员快速定位高危目标。
-
+态势感知大屏如图\ref{fig:dashboard}所示，通过 ECharts 实时渲染 Elasticsearch 
+聚合数据。界面直观展示系统关键指标、24小时流量趋势、攻击源 Top 排名及攻击类型分布
+，实现“一屏览全局”，助力快速定位高危目标。
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{fig/chapter5/dashboard_overview.png}
+\includegraphics[width=0.95\linewidth]{fig/chapter5/dashboard_overview.png}
 \caption{网络流量态势感知可视化大屏}
 \label{fig:dashboard}
 \end{figure}
 
 3. 异常流量分析详情页
 
-该界面主要用于展示分析检测层（IED-WPAT + 多中心聚类）的推理结果。界面主
-体为一个可交互的数据表格，详细列出了每一条被判定为异常的流量记录，包含时间戳
-、源/目的 IP、协议类型以及核心字段——异常得分（Anomaly Score）。
-运维人员点击某条记录，可展开查看其五元组详情及所属的聚类簇信息。此外，界面上方配
-有“异常得分分布散点图”，用红色标记超出超球体边界的离群点，直观验证了算法对长尾
-流量的检测效果，如图~\ref{fig:traffic_analysis}~所示。
+流量分析界面如图\ref{fig:traffic_analysis}，展示分析检测层的推理结果。界面顶
+部通过散点图标记超球体外的离群点，验证长尾检测效果；主体利用交互表格呈现异常流量关键
+指标（时间、IP、异常得分），并支持展开查看五元组与聚类信息。
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{fig/chapter5/traffic_analysis_detail.png}
+\includegraphics[width=0.95\linewidth]{fig/chapter5/traffic_analysis_detail.png}
 \caption{异常流量检测结果详情界面}
 \label{fig:traffic_analysis}
 \end{figure}
 
 4. 系统用户管理界面
 
-该界面为管理员提供对系统用户的全生命周期管理能力。通过表格形式展示已注册用户信息，
-支持按角色（管理员/普通用户）和状态进行筛选。操作栏提供了编辑与删除功能：点击“编辑”
-会弹出模态框（Modal），回显当前用户信息供修改；点击“删除”则触发二次确认机制，防止误
-操作。所有变更操作均通过 RESTful 接口同步至后端 MySQL 数据库，确保数据的一致性，
-如图~\ref{fig:user_manage}~所示。
+用户管理界面如图\ref{fig:user_manage}所示，以表格呈现用户信息并支持多维度筛选。
+界面提供带回显的编辑与带二次确认的删除功能，所有数据变更均经 RESTful 接口同步至
+MySQL 以确保数据一致性。
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\linewidth]{fig/chapter5/user_management.png}
+\includegraphics[width=0.95\linewidth]{fig/chapter5/user_management.png}
 \caption{系统用户权限管理界面}
 \label{fig:user_manage}
 \end{figure}

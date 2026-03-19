@@ -5,7 +5,7 @@
 在网络流量异常检测中，无监督方法常假设正常流量分布紧凑，异常流量分布稀疏。然而在真实网络
 环境中，正常流量内部广泛存在数据不平衡问题\cite{lee2025madcluster,yang2025toward}，
 呈现显著的长尾分布特征。具体而言，包含 $N$ 个正常样本的训练集 $\mathcal{X}$ 可依据分布
-密度 $\rho(x)$ 划分为两个子集：
+密度 $\rho(x)$ 划分为两个子集\cite{nong2025anomaly}：
 
 高频正常集（Head Set，$\mathcal{H}$）：由心跳包等模式单一的背景流量组成，样本
 分布极度密集（$\rho(x)$ 大）。
@@ -21,20 +21,13 @@
 \end{equation}
 
 由于优化梯度的更新方向被庞大的 $\mathcal{H}$ 集合绝对主导，传统模型不可避免地产生以下三大检测偏差：
-H
+
 （1）中心偏移：特征中心 $c$ 被强行拉向高密度几何中心，无法兼顾稀疏的正常模式。
 
 （2）边界收缩：为适配密集区，模型缩小超球体半径 $R$，导致决策边界过度拟合主流样本。
 
-（3）尾部丢失：位于长尾集合 $\mathcal{T}$ 的合法流量被排斥在边界之外，导致极高的虚警误报率。
+（3）尾部丢失：长尾集合 $\mathcal{T}$ 的合法流量被排斥在边界之外，导致极高的误报率。
 
-针对上述痛点，本章提出一种基于实例多样性加权的无监督超球体学习方法。通过构建多样性感知
-加权损失函数，平衡不同频次正常模式对模型训练的贡献。
-
-
-如图 \ref{fig:31} 所示，传统方法学习的中心紧贴高密度区，致使稀疏正常样本被误判；而加权
-方法通过动态调节样本贡献权重，引导特征中心适度向稀疏区域偏移，从而完整覆盖多样化的正常模
-式。
 
 \begin{figure}[H]
     \centering
@@ -43,11 +36,18 @@ H
     \label{fig:31}
 \end{figure}
 
+针对上述痛点，本章提出一种基于实例多样性加权的无监督超球体学习方法。通过构建多样性感知
+加权损失函数，平衡不同频次正常模式对模型训练的贡献。
+
+如图 \ref{fig:31} 所示，传统方法学习的中心紧贴高密度区，致使稀疏正常样本被误判；而加权
+方法通过动态调节样本贡献权重，引导特征中心适度向稀疏区域偏移，从而完整覆盖多样化的正常模
+式。
+
 \section{基于IED加权的超球体的异常流量检测模型}
 \label{sec:weighted_method}
 
 \subsection{模型整体框架设计}
-在明确了 IED 作为多样性度量指标的基础上，本节构建基于实例加权的自监督超球体学习模型。
+在明确了欧氏距离（IED）作为多样性度量指标的基础上，本节构建基于实例加权的自监督超球体学习模型。
 该模型的核心思想是通过动态调整不同分布密度下样本的负反馈压力，引导特征空间中的超球体
 边界进行自适应扩张，从而保护长尾分布下的正常样本不被误判。
 
@@ -61,19 +61,19 @@ H
 	\label{fig:第三章模型框架图}
 \end{figure}
 
-特征学习模块：针对网络流量中非平稳噪声干扰与长序列建模效率低的问题，本
+特征学习模块（TFLM）：针对网络流量中非平稳噪声干扰与长序列建模效率低的问题，本
 模块引入小波变换与分块机制。原始流量经离散小波变换解耦
 为全局低频与局部高频分量后，被划分为序列块并输入双分支异常注意力网络进行
-特征提炼。最终输出的低维特征向量（$\textbf{z}$），为后续计算样本稀缺度及
+特征提炼。最终输出的低维特征向量（$\mathbf{z}$），为后续计算样本稀缺度及
 优化超球体边界提供高质量的基础数据。
 
-多样性评估模块：在每个训练批次中，利用 IED 指标实时评估样本的局
+多样性评估模块（DAM）：在每个训练批次中，利用 IED 指标实时评估样本的局
 部稀缺性，识别出处于分布长尾区域的正常模式。
 
-损失与权重模块：根据 IED 指标生成的权重因子 ，对损失函数进行加权更新，修正特征
+损失与权重模块（LWM）：根据 IED 指标生成的权重因子 ，对损失函数进行加权更新，修正特征
 中心偏移并优化超球体边界。
 
-中心建模模块：利用上一步生成的实例权重 $\mathbf{w}$ 计算当前批次的加权质心，并通过指数滑动平均
+中心建模模块（CMM）：利用上一步生成的实例权重 $\mathbf{w}$ 计算当前批次的加权质心，并通过指数滑动平均
 策略平滑更新全局特征中心，从而主动纠正由高频样本主导的中心偏移，确保决策边界有效
 包容稀疏的长尾正常模式。
 
@@ -151,35 +151,44 @@ $\mathbf{E}_{pos} \in \mathbb{R}^{N \times d_k}$ 为可学习的位置编码矩�
 （2）小波引导的双分支异常注意力：经典的 Anomaly Transformer 在单一时域上面临局部与全局特征提取的博弈。
 本模块利用解耦后的时频 Patch 特征，显式引导双分支注意力机制的学习。
 
-（3）低频驱动的序列关联（Series-Association）：低频分量 $E_{low}$ 滤除了噪声突变，最适合刻画全
-局平稳演化规律。将其映射为查询、键、值矩阵（$Q, K, V$），通过自注意力机制计算数据驱动的序列关联权重分布：
+（3）低频驱动的序列关联：低频分量 $E_{low}$ 滤除了噪声突变，最适合刻画全
+局平稳演化规律。将其映射为查询、键、值矩阵（$Q, K, V$）：
+\begin{equation}
+    Q = E_{low} W_Q, \quad K = E_{low} W_K, \quad V = E_{low} W_V
+\end{equation}
+通过自注意力机制计算数据驱动的序列关联权重分布：
 \begin{equation}
     S_i = \text{Softmax}\left(\frac{Q_i K^T}{\sqrt{d_k}}\right), \quad i \in \{1, 2, \ldots, N\}
 \end{equation}
 
-（4）高频能量驱动的先验关联（Prior-Association）：高频分量 $E_{high}$ 直接反映流量的突变剧烈程度。
-利用其动态生成先验高斯分布的尺度参数 $\sigma_i = \text{MLP}(E_{high}^{(i)})$，进而计算第 $i$ 个 
-Patch 对第 $j$ 个 Patch 的先验权重：
+（4）高频能量驱动的先验关联：高频分量 $E_{high}$ 直接反映流量的
+突变剧烈程度。利用多层感知机（MLP）将其动态映射为先验高斯分布的尺度参数 $\sigma_i$：
+\begin{equation}
+    \sigma_i = \text{MLP}(E_{high}^{(i)})
+\end{equation}
+进而计算第 $i$ 个 Patch 对第 $j$ 个 Patch 的先验权重：
 \begin{equation}
     P_{i,j} = \frac{1}{\sqrt{2\pi}\sigma_i} \exp\left(-\frac{|j-i|^2}{2\sigma_i^2}\right)
 \end{equation}
-当局部出现剧烈高频波动（疑似长尾模式或异常）时，该机制能自适应地输出极小的 $\sigma_i$，迫使注意力窗口收
-缩聚焦于突变上下文；而在平稳区域，则适度扩张感受野。
+当局部出现剧烈高频波动（疑似长尾模式或异常）时，该机制能自适应地输出极小的 $\sigma_i$，迫
+使注意力窗口收缩聚焦于突变上下文；而在平稳区域，则适度扩张感受野。
 
-联合特征聚合与输出：聚合双分支的先验分布 $P_i$ 与序列分布 $S_i$，并结合特征值 $V$，再经过多层前馈网络
-（FFN）与层归一化深度提炼，WPAT 最终输出低维且高度紧凑的隐层特征表示：
+联合特征聚合与输出：将先验分布矩阵 $P$ 与序列分布矩阵 $S$ 聚合，并作用于特征值矩阵 $V$。
+随后经多层前馈网络（FFN）与层归一化（LayerNorm）进行深度提炼，WPAT 最终计算出低维紧凑的
+隐层特征表示 $\mathcal{Z}$：
 \begin{equation}
-    \mathcal{Z} = \{z_1, z_2, \ldots, z_N\} \in \mathbb{R}^{N \times d_k}
+    \mathcal{Z} = \text{LayerNorm}(\text{FFN}((P + S)V))
 \end{equation}
-此时 $z_i$ 代表一个时间 Patch 的特征。这些具备高模式区分度的特征将作为双向输出：一方面用于多样性评估
-模块计算 IED 稀缺度指标，另一方面送入中心建模模块，以优化自适应长尾正常模式的加权超球体决策边界。
+其中 $\mathcal{Z} = \{z_1, z_2, \ldots, z_N\} \in \mathbb{R}^{N \times d_k}$，
+此时 $z_i$ 代表一个时间 Patch 的特征。这些具备高模式区分度的特征将作为双向输出：一方面用于多
+样性评估模块计算 IED 稀缺度指标，另一方面送入中心建模模块，以优化自适应长尾正常模式的加权超球体决策边界。
 
 \subsection{中心建模模块}
 传统的超球体模型通常采用所有样本的简单算术平均来更新特征中心 $c$，这极易导致“中心偏移”
 现象。中心建模模块通过引入权重信息，实现了超球体中心的鲁棒更新，如图 \ref{fig:中心建模模块} 所示。
 \begin{figure}[h]
 	\centering
-	\includegraphics[scale=0.7]{fig/chapter3/中心建模框架.pdf}
+	\includegraphics[scale=0.8]{fig/chapter3/中心建模框架.pdf}
 	\caption{中心建模模块}
 	\label{fig:中心建模模块}
 \end{figure}
@@ -257,7 +266,7 @@ D_{IED}(z_i) = \frac{1}{k} \sum_{j=1}^{k} ||z_i - z_j||_2, \quad z_j \in \mathca
 \section{实验设置}
 
 \subsection{实验数据集}
-为了全面验证模型在多模态运维数据及复杂网络环境下的泛化能力与鲁棒性，
+为了全面验证模型在多中心运维数据及复杂网络环境下的泛化能力与鲁棒性，
 本文选用了五组具有代表性的基准数据集进行实验。这些数据集涵盖了服务器
 性能指标（System Metrics）与网络安全流量（Network Traffic/Logs）
 两大典型场景，能够充分检验 IED 加权方法在处理不同类型长尾分布时的有效性。
@@ -316,7 +325,7 @@ FLNET2023 & Flow & 混合型 & 77 & 520,100 & 310,500 & 1.25 \\
  ，本节将按照图\ref{fig:datapreprocess}所示的流程进行严格的数据预处理。
  \begin{figure}[h]
 	\centering
-	\includegraphics[scale=0.6]{fig/chapter3/数据预处理流程.pdf}
+	\includegraphics[scale=0.7]{fig/chapter3/数据预处理流程.pdf}
 	\caption{数据预处理流程}
 	\label{fig:datapreprocess}
 \end{figure}
@@ -621,7 +630,7 @@ WPAT 通过离散小波变换（DWT）将平稳趋势（低频）与突变事件
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[scale=0.5]{fig/chapter3/t-SNE.pdf}
+	\includegraphics[scale=0.53]{fig/chapter3/t-SNE.pdf}
 	\caption{数据集特征空间t-SNE可视化对比}
 	\label{fig:t-SNE}
 \end{figure}
@@ -706,7 +715,7 @@ I-Sec-IDS & 89.10 & 90.55 & 91.40 & \textbf{92.05} & 90.80 & 86.45 \\
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[scale=0.4]{fig/chapter3/param_sensitivity.pdf}
+	\includegraphics[scale=0.4]{fig/chapter3/Figure_1.png}
 	\caption{参数敏感性 3D 曲面图}
 	\label{fig:param_sensitivity}
 \end{figure}
